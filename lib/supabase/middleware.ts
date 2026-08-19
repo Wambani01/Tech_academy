@@ -7,6 +7,13 @@ const STUDENT_PREFIXES = ['/dashboard', '/learn', '/assignments', '/certificates
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request })
 
+  // Before Supabase is provisioned the public site must still render, so the
+  // guards no-op rather than throwing. Student and admin routes are unreachable
+  // anyway — they have no session to read.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return response
+  }
+
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

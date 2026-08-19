@@ -230,34 +230,100 @@ export type Payment = {
   created_at: string
 }
 
-type TableDef<Row, Insert = Partial<Row>, Update = Partial<Row>> = {
+type Rel<Name extends string, Col extends string, Ref extends string, One extends boolean = false> = {
+  foreignKeyName: Name
+  columns: [Col]
+  isOneToOne: One
+  referencedRelation: Ref
+  referencedColumns: ['id']
+}
+
+type TableDef<Row, Rels extends readonly unknown[] = []> = {
   Row: Row
-  Insert: Insert
-  Update: Update
-  Relationships: []
+  Insert: Partial<Row>
+  Update: Partial<Row>
+  Relationships: Rels
 }
 
 export type Database = {
   public: {
     Tables: {
       profiles: TableDef<Profile>
-      instructors: TableDef<Instructor>
-      courses: TableDef<Course>
-      modules: TableDef<Module>
-      lessons: TableDef<Lesson>
-      enrollments: TableDef<Enrollment>
-      lesson_progress: TableDef<LessonProgress>
-      assignments: TableDef<Assignment>
-      submissions: TableDef<Submission>
-      certificates: TableDef<Certificate>
+      instructors: TableDef<
+        Instructor,
+        [Rel<'instructors_profile_id_fkey', 'profile_id', 'profiles'>]
+      >
+      courses: TableDef<
+        Course,
+        [Rel<'courses_lead_instructor_id_fkey', 'lead_instructor_id', 'instructors'>]
+      >
+      modules: TableDef<Module, [Rel<'modules_course_id_fkey', 'course_id', 'courses'>]>
+      lessons: TableDef<Lesson, [Rel<'lessons_module_id_fkey', 'module_id', 'modules'>]>
+      enrollments: TableDef<
+        Enrollment,
+        [
+          Rel<'enrollments_profile_id_fkey', 'profile_id', 'profiles'>,
+          Rel<'enrollments_course_id_fkey', 'course_id', 'courses'>,
+        ]
+      >
+      lesson_progress: TableDef<
+        LessonProgress,
+        [
+          Rel<'lesson_progress_profile_id_fkey', 'profile_id', 'profiles'>,
+          Rel<'lesson_progress_lesson_id_fkey', 'lesson_id', 'lessons'>,
+        ]
+      >
+      assignments: TableDef<
+        Assignment,
+        [Rel<'assignments_course_id_fkey', 'course_id', 'courses'>]
+      >
+      submissions: TableDef<
+        Submission,
+        [
+          Rel<'submissions_assignment_id_fkey', 'assignment_id', 'assignments'>,
+          Rel<'submissions_profile_id_fkey', 'profile_id', 'profiles'>,
+        ]
+      >
+      certificates: TableDef<
+        Certificate,
+        [
+          Rel<'certificates_profile_id_fkey', 'profile_id', 'profiles'>,
+          Rel<'certificates_course_id_fkey', 'course_id', 'courses'>,
+        ]
+      >
       events: TableDef<EventRow>
-      registrations: TableDef<Registration>
+      registrations: TableDef<
+        Registration,
+        [
+          Rel<'registrations_event_id_fkey', 'event_id', 'events'>,
+          Rel<'registrations_profile_id_fkey', 'profile_id', 'profiles'>,
+        ]
+      >
       media_assets: TableDef<MediaAsset>
-      pages: TableDef<Page>
-      page_blocks: TableDef<PageBlock>
-      faqs: TableDef<Faq>
-      enquiries: TableDef<Enquiry>
-      payments: TableDef<Payment>
+      pages: TableDef<Page, [Rel<'pages_updated_by_fkey', 'updated_by', 'profiles'>]>
+      page_blocks: TableDef<
+        PageBlock,
+        [
+          Rel<'page_blocks_page_id_fkey', 'page_id', 'pages'>,
+          Rel<'page_blocks_image_id_fkey', 'image_id', 'media_assets'>,
+          Rel<'page_blocks_updated_by_fkey', 'updated_by', 'profiles'>,
+        ]
+      >
+      faqs: TableDef<Faq, [Rel<'faqs_updated_by_fkey', 'updated_by', 'profiles'>]>
+      enquiries: TableDef<
+        Enquiry,
+        [
+          Rel<'enquiries_course_id_fkey', 'course_id', 'courses'>,
+          Rel<'enquiries_profile_id_fkey', 'profile_id', 'profiles'>,
+        ]
+      >
+      payments: TableDef<
+        Payment,
+        [
+          Rel<'payments_profile_id_fkey', 'profile_id', 'profiles'>,
+          Rel<'payments_course_id_fkey', 'course_id', 'courses'>,
+        ]
+      >
     }
     Views: { [_ in never]: never }
     Functions: {

@@ -7,9 +7,6 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'd8j0ntlcm91z4.cloudfront.net' },
     ],
   },
-  experimental: {
-    typedRoutes: false,
-  },
 }
 
 export default nextConfig
