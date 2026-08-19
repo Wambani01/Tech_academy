@@ -62,19 +62,194 @@ insert into pages (slug, title, status, published_at) values
   ('campus',   'Digital Campus',  'published', now()),
   ('events',   'Events',          'published', now());
 
-insert into page_blocks (page_id, position, kind, fields, image_id)
+-- page_blocks: the complete set for every seeded page. Payloads mirror the
+-- block registry in cms/block-registry.md and lib/cms/schemas.ts.
+
+-- Homepage ------------------------------------------------------------
+insert into page_blocks (page_id, position, kind, fields, image_id, image_alt)
 select p.id, 1, 'hero', jsonb_build_object(
-         'eyebrow', 'East Africa''s Practical Tech Academy',
+         'eyebrow',  'East Africa''s Practical Tech Academy',
          'headline', 'Learn the skills that get you hired & paid.',
-         'sub', 'Cohort-based programs in marketing, design, development and AI tools — real projects, real feedback, real portfolio.',
-         'cta1', 'Browse Programs',
-         'cta2', 'For Teams'),
-       m.id
+         'sub',      'Cohort-based programs in marketing, design, development and AI tools — real projects, real feedback, real portfolio.',
+         'cta1',     'Browse Programs',
+         'cta2',     'For Teams'),
+       m.id,
+       'Sunlit classroom with students working at laptops'
 from pages p, media_assets m
 where p.slug = 'home' and m.public_id = 'marketing/hero-classroom-daylight';
 
+insert into page_blocks (page_id, position, kind, fields)
+select p.id, 2, 'stats', jsonb_build_object(
+         's1', '2,400+ · Trained',
+         's2', '4.9★ · Avg rating',
+         's3', '35+ · Programs',
+         's4', '100% · Hands-on')
+from pages p where p.slug = 'home';
+
+insert into page_blocks (page_id, position, kind, fields, image_id, image_alt)
+select p.id, 3, 'tracks', jsonb_build_object(
+         'title', 'Pick your track',
+         't1', 'AI Marketing',
+         'b1', 'Campaigns, content & analytics with AI.',
+         't2', 'Brand & Product Design',
+         'b2', 'Visual systems & AI creative flow.',
+         't3', 'Web & App Development',
+         'b3', 'Modern stacks, AI pair-coding.',
+         't4', 'No-Code Automation',
+         'b4', 'Internal tools, zero heavy code.'),
+       m.id,
+       'Marketer reviewing a campaign dashboard'
+from pages p, media_assets m
+where p.slug = 'home' and m.public_id = 'courses/track-ai-marketing';
+
+insert into page_blocks (page_id, position, kind, fields)
+select p.id, 4, 'steps', jsonb_build_object(
+         'title', 'Five steps to a provable skill',
+         'step1', 'Enroll',
+         'step2', 'Learn by doing',
+         'step3', 'Apply it',
+         'step4', 'Get certified',
+         'step5', 'Keep growing')
+from pages p where p.slug = 'home';
+
+insert into page_blocks (page_id, position, kind, fields)
+select p.id, 5, 'proof', jsonb_build_object(
+         'title',  'What graduates say',
+         'quote1', 'I came in able to run ads and left able to explain why they worked. The campaign brief from week four got me the job.',
+         'attr1',  'Marketing cohort, 2026',
+         'quote2', 'The assignments were real client work in disguise. My portfolio tripled in six weeks.',
+         'attr2',  'Design cohort, 2026',
+         'quote3', 'Pair-coding with AI properly — not just autocomplete. I ship features I would have quoted a month for.',
+         'attr3',  'Development cohort, 2026')
+from pages p where p.slug = 'home';
+
+-- The questions themselves live in `faqs`; only the heading is stored here.
 insert into page_blocks (page_id, position, kind, fields)
 select p.id, 6, 'faq', jsonb_build_object(
          'title', 'Questions people ask before enrolling',
          'intro', 'Everything about cohorts, payment and certificates. Still unsure? Talk to admissions.')
 from pages p where p.slug = 'home';
+
+insert into page_blocks (page_id, position, kind, fields)
+select p.id, 7, 'cta', jsonb_build_object(
+         'title', 'For Individuals',
+         'btn',   'Browse All Courses')
+from pages p where p.slug = 'home';
+
+insert into page_blocks (page_id, position, kind, fields)
+select p.id, 8, 'meta', jsonb_build_object(
+         'title', 'Tech Lab Academy — practical tech training in Nairobi',
+         'desc',  'Cohort-based programs in marketing, design, development and AI tools — real projects, real feedback, real portfolio.')
+from pages p where p.slug = 'home';
+
+-- About ---------------------------------------------------------------
+insert into page_blocks (page_id, position, kind, fields)
+select p.id, 1, 'hero', jsonb_build_object(
+         'eyebrow',  'About Us',
+         'headline', 'We built the academy we wished existed.',
+         'sub',      'Most training teaches tools in isolation. We pair strategy with hands-on practice, so every graduate leaves with judgment, not just button-pushing skills — and a portfolio to prove it.',
+         'cta1',     '',
+         'cta2',     '')
+from pages p where p.slug = 'about';
+
+insert into page_blocks (page_id, position, kind, fields)
+select p.id, 2, 'stats', jsonb_build_object(
+         's1', '2019 · Founded',
+         's2', '2,400+ · Graduates',
+         's3', '35+ · Programs run',
+         's4', '18 · Instructors')
+from pages p where p.slug = 'about';
+
+insert into page_blocks (page_id, position, kind, fields)
+select p.id, 3, 'meta', jsonb_build_object(
+         'title', 'About Tech Lab Academy',
+         'desc',  'A small, senior team of instructors across marketing, design, development and automation.')
+from pages p where p.slug = 'about';
+
+-- For Business --------------------------------------------------------
+insert into page_blocks (page_id, position, kind, fields, image_id, image_alt)
+select p.id, 1, 'hero', jsonb_build_object(
+         'eyebrow',  'For Teams & Organisations',
+         'headline', 'Upskill your whole team in AI-first ways of working.',
+         'sub',      'Structured, cohort-based training for marketing, design, dev and ops teams — built around your stack, your tools, and your timeline.',
+         'cta1',     'Book a Team Demo',
+         'cta2',     ''),
+       m.id,
+       'A team in a private training session'
+from pages p, media_assets m
+where p.slug = 'business' and m.public_id = 'marketing/business-team-training';
+
+insert into page_blocks (page_id, position, kind, fields)
+select p.id, 2, 'stats', jsonb_build_object(
+         's1', '3× · Speed',
+         's2', '40+ · Orgs',
+         's3', '4–12wk · Cohort',
+         's4', '')
+from pages p where p.slug = 'business';
+
+insert into page_blocks (page_id, position, kind, fields)
+select p.id, 3, 'meta', jsonb_build_object(
+         'title', 'Corporate training — Tech Lab Academy',
+         'desc',  'Custom cohorts for marketing, design, dev and ops teams, built around your stack and goals.')
+from pages p where p.slug = 'business';
+
+-- Digital Campus ------------------------------------------------------
+insert into page_blocks (page_id, position, kind, fields, image_id, image_alt)
+select p.id, 1, 'hero', jsonb_build_object(
+         'eyebrow',  'Digital Campus',
+         'headline', 'Learn anywhere, apply everywhere.',
+         'sub',      'Video lessons, templates and community from any device — with structured milestones so you actually finish.',
+         'cta1',     'Explore Campus',
+         'cta2',     ''),
+       m.id,
+       'Student studying at home in the evening'
+from pages p, media_assets m
+where p.slug = 'campus' and m.public_id = 'marketing/campus-evening-study';
+
+insert into page_blocks (page_id, position, kind, fields)
+select p.id, 2, 'meta', jsonb_build_object(
+         'title', 'Digital Campus — Tech Lab Academy',
+         'desc',  'Video lessons, templates and community from any device, with structured milestones.')
+from pages p where p.slug = 'campus';
+
+-- Events --------------------------------------------------------------
+insert into page_blocks (page_id, position, kind, fields)
+select p.id, 1, 'hero', jsonb_build_object(
+         'eyebrow',  'Masterclasses & Events',
+         'headline', 'Live sessions with people doing the work right now.',
+         'sub',      'One-off masterclasses and short workshops — no long-term commitment, straight to the point.',
+         'cta1',     '',
+         'cta2',     '')
+from pages p where p.slug = 'events';
+
+insert into page_blocks (page_id, position, kind, fields)
+select p.id, 2, 'meta', jsonb_build_object(
+         'title', 'Masterclasses & events — Tech Lab Academy',
+         'desc',  'One-off masterclasses and short workshops with practitioners.')
+from pages p where p.slug = 'events';
+
+-- Curriculum for the flagship course, matching the course detail page.
+insert into modules (course_id, position, title, duration)
+select c.id, v.position, v.title, v.duration
+from courses c,
+     (values (1, 'Why AI + Strategy Beats Tools Alone', '45 min'),
+             (2, 'Building Your Content Calendar',      '1h 10m'),
+             (3, 'AI Drafting Without Losing Your Voice','55 min'),
+             (4, 'Campaign Brief: Product Launch',      '1h 30m'),
+             (5, 'Measuring What Matters',              '50 min'),
+             (6, 'Scaling Your Workflow',               '40 min'))
+       as v(position, title, duration)
+where c.slug = 'ai-powered-content-campaigns';
+
+-- One lesson per module so the player has something to render.
+insert into lessons (module_id, position, title, kind)
+select m.id, 1, m.title, 'video'
+from modules m
+join courses c on c.id = m.course_id
+where c.slug = 'ai-powered-content-campaigns';
+
+-- Link each course to the lead instructor for its track.
+update courses c
+set lead_instructor_id = i.id
+from instructors i
+where i.track = c.track and i.role_title = 'Lead Instructor';

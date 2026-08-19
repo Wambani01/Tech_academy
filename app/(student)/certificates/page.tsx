@@ -71,16 +71,18 @@ export default async function CertificatesPage() {
               </div>
               <div className="flex gap-2.5 flex-wrap">
                 <a
-                  href={`/api/certificates/${cert.id}`}
+                  href={`/verify/${cert.serial}`}
                   className="bg-amber text-ink px-4 py-[9px] rounded-sm text-label font-bold"
                 >
-                  Download
+                  View &amp; print
                 </a>
                 <a
                   href={`/verify/${cert.serial}`}
+                  target="_blank"
+                  rel="noreferrer"
                   className="border border-[rgba(244,251,232,.3)] text-cream px-4 py-[9px] rounded-sm text-label font-bold"
                 >
-                  Verify
+                  Share link
                 </a>
               </div>
             </div>
