@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+/* Tech Lab Academy — Tailwind v4 theme.
+   Every value below is lifted from the HTML prototypes in the design handoff. */
+
+@theme {
+  /* ---- surfaces ---------------------------------------------------- */
+  --color-ink:          #0F2019;
+  --color-cream:        #F4FBE8;
+  --color-paper:        #FBFAF4;
+  --color-card:         #FFFFFF;
+
+  /* ---- accents ----------------------------------------------------- */
+  --color-amber:        #F2A93B;
+  --color-amber-deep:   #B5741A;
+  --color-forest:       #1F5C4A;
+
+  /* ---- text -------------------------------------------------------- */
+  --color-body:         #293830;
+  --color-body-soft:    #374238;
+  --color-muted:        #465148;
+  --color-muted-2:      #8A968E;
+  --color-on-ink:       #9FB2A4;
+  --color-on-ink-2:     #B9C9BC;
+  --color-on-ink-3:     #7A8A7E;
+  --color-on-ink-4:     #5E6E63;
+
+  /* ---- hairlines --------------------------------------------------- */
+  --color-line:         rgba(15, 32, 25, 0.10);
+  --color-line-strong:  rgba(15, 32, 25, 0.20);
+  --color-line-soft:    rgba(15, 32, 25, 0.06);
+  --color-line-on-ink:  rgba(244, 251, 232, 0.12);
+
+  /* ---- type -------------------------------------------------------- */
+  --font-display: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+  --font-sans:    var(--font-public-sans), 'Public Sans', sans-serif;
+
+  --text-hero:        clamp(38px, 5.5vw, 72px);
+  --text-h1:          clamp(32px, 4.5vw, 52px);
+  --text-h2:          clamp(26px, 3.5vw, 36px);
+  --text-h3:          clamp(24px, 3.2vw, 32px);
+  --text-stat:        clamp(22px, 3vw, 34px);
+  --text-admin-title: 28px;
+  --text-panel:       19px;
+  --text-lead:        18px;
+  --text-body:        14.5px;
+  --text-ui:          14px;
+  --text-meta:        13px;
+  --text-label:       12.5px;
+  --text-pill:        12px;
+  --text-micro:       11.5px;
+
+  /* ---- radii ------------------------------------------------------- */
+  --radius-xs:   4px;
+  --radius-sm:   5px;
+  --radius-md:   6px;
+  --radius-lg:   7px;
+  --radius-xl:   8px;
+  --radius-2xl:  10px;
+  --radius-3xl:  12px;
+  --radius-4xl:  14px;
+  --radius-pill: 20px;
+
+  /* ---- layout ------------------------------------------------------ */
+  --container-site:   1240px;
+  --container-admin:  1240px;
+  --container-form:   820px;
+  --container-auth:   400px;
+  --spacing-sidebar-admin:   230px;
+  --spacing-sidebar-student: 240px;
+
+  /* ---- breakpoints -------------------------------------------------- */
+  --breakpoint-stack: 861px;
+}
+
+/* The prototypes use a single breakpoint family at 860px. `stack:` is the
+   min-width counterpart, so `max-stack:` (861px-1) targets the collapsed layout. */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background: var(--color-cream);
+    color: var(--color-body);
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+  button {
+    font-family: inherit;
+  }
+  *:focus-visible {
+    outline: 2px solid var(--color-amber);
+    outline-offset: 2px;
+  }
+}
+
+@utility container-site {
+  max-width: var(--container-site);
+  margin-inline: auto;
+  padding-inline: 56px;
+  @media (max-width: 900px) {
+    padding-inline: 24px;
+  }
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+}
