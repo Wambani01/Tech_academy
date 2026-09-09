@@ -36,6 +36,28 @@ const warn = (l, n) => line(WARN, l, n)
 
 const present = (k) => typeof env[k] === 'string' && env[k].length > 0
 
+/**
+ * Did this response actually come from PostgREST, or from something in between?
+ *
+ * A corporate proxy, a captive portal or a sandbox egress allowlist will answer
+ * 401/403 for a host it refuses to relay. Treating that as "RLS blocked me, as
+ * designed" turns a total failure to reach the database into a green tick, so
+ * every non-2xx is checked for PostgREST's error shape before it is believed.
+ */
+function postgrestError(status, body) {
+  if (status >= 200 && status < 300) return null
+  try {
+    const j = JSON.parse(body)
+    // PostgREST errors always carry a code, and usually message/hint/details.
+    if (j && typeof j === 'object' && typeof j.code === 'string') return j
+  } catch {
+    /* not JSON — definitely not PostgREST */
+  }
+  return undefined // reached something, but not the database
+}
+
+const snip = (s) => s.replace(/\s+/g, ' ').trim().slice(0, 140)
+
 async function main() {
   console.log('\n\x1b[1mTech Lab Academy — environment doctor\x1b[0m')
 
@@ -86,39 +108,67 @@ async function main() {
           ? ok('google oauth', 'configured')
           : warn('google oauth', 'not configured — the "Continue with Google" button will error')
       } else {
-        bad('auth service reachable', `HTTP ${r.status}`)
+        // Include the body: an egress allowlist or proxy explains itself here,
+        // and "HTTP 403" alone sends you hunting through Supabase settings for
+        // a problem that is on your side of the network.
+        bad('auth service reachable', `HTTP ${r.status} — ${snip(await r.text())}`)
       }
     } catch (e) {
       bad('auth service reachable', e.message)
     }
 
     // Schema applied?
+    let restReached = false
     try {
       const r = await fetch(`${base}/rest/v1/profiles?select=id&limit=1`, {
         headers: { apikey: anon, Authorization: `Bearer ${anon}` },
       })
-      if (r.status === 200) ok('table "profiles" exists', 'migrations applied')
-      else if (r.status === 404) bad('table "profiles"', 'NOT FOUND — migrations have not been applied')
-      else if (r.status === 401 || r.status === 403) ok('table "profiles" exists', 'RLS blocks anon reads, as designed')
-      else bad('table "profiles"', `HTTP ${r.status}: ${(await r.text()).slice(0, 120)}`)
+      const body = r.ok ? '' : await r.text()
+      const pg = postgrestError(r.status, body)
+
+      if (r.status === 200) {
+        restReached = true
+        ok('table "profiles" exists', 'migrations applied')
+      } else if (r.status === 404) {
+        restReached = true
+        bad('table "profiles"', 'NOT FOUND — migrations have not been applied')
+      } else if (pg) {
+        // A real PostgREST refusal. RLS denying a SELECT yields 200 with an
+        // empty array, so a coded error here is something else — a rejected
+        // key, a missing schema, a malformed request — and is worth printing.
+        restReached = true
+        bad('table "profiles"', `HTTP ${r.status} ${pg.code} — ${snip(pg.message ?? body)}`)
+      } else {
+        bad(
+          'REST API unreachable',
+          `HTTP ${r.status} from something that is not PostgREST — ${snip(body)}`
+        )
+      }
     } catch (e) {
       bad('table "profiles"', e.message)
     }
 
-    // Seed loaded?
-    try {
-      const r = await fetch(`${base}/rest/v1/courses?select=id&limit=1`, {
-        headers: { apikey: anon, Authorization: `Bearer ${anon}`, Prefer: 'count=exact', Range: '0-0' },
-      })
-      if (r.status === 404) bad('table "courses"', 'NOT FOUND — migrations have not been applied')
-      else {
-        const count = Number((r.headers.get('content-range') ?? '').split('/')[1])
-        Number.isFinite(count) && count > 0
-          ? ok('seed data', `${count} published course(s) readable by anon`)
-          : warn('seed data', 'no anon-readable courses — supabase/seed.sql may not have run')
+    // Seed loaded? Only meaningful if the REST API actually answered.
+    if (!restReached) {
+      warn('seed data', 'skipped — the REST API did not answer')
+    } else {
+      try {
+        const r = await fetch(`${base}/rest/v1/courses?select=id&limit=1`, {
+          headers: { apikey: anon, Authorization: `Bearer ${anon}`, Prefer: 'count=exact', Range: '0-0' },
+        })
+        if (r.status === 404) {
+          bad('table "courses"', 'NOT FOUND — migrations have not been applied')
+        } else if (!r.ok) {
+          bad('seed data', `HTTP ${r.status} — ${snip(await r.text())}`)
+        } else {
+          const count = Number((r.headers.get('content-range') ?? '').split('/')[1])
+          Number.isFinite(count) && count > 0
+            ? ok('seed data', `${count} published course(s) readable by anon`)
+            : warn('seed data', 'no anon-readable courses — supabase/seed.sql may not have run')
+        }
+      } catch (e) {
+        warn('seed data', e.message)
       }
-    } catch (e) {
-      warn('seed data', e.message)
     }
 
     // Service role actually elevated?

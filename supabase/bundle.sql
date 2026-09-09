@@ -406,7 +406,84 @@ alter function is_instructor_of(uuid)       set search_path = public, pg_temp;
 alter function handle_new_user()            set search_path = public, pg_temp;
 
 -- ====================================================================
--- step 4  —  seed.sql
+-- step 4  —  20260909120000_lock_down_definer_functions.sql
+-- ====================================================================
+-- Finish the search_path pinning that 20260101000002 started.
+--
+-- `touch_updated_at` was left out of that migration. It is the one trigger
+-- function in the schema that is NOT security definer, so the blast radius is
+-- far smaller than `is_admin` — but it is inconsistent to pin three of four
+-- functions, and Supabase's database linter keeps reporting the fourth
+-- (`function_search_path_mutable`), which trains you to ignore the report.
+--
+-- Also drops the redundant explicit EXECUTE grants on the three security-definer
+-- functions. These were never what made the functions callable — Postgres grants
+-- EXECUTE to PUBLIC by default, and `anon` / `authenticated` were inheriting it
+-- from there. Removing the explicit grants changes nothing on its own; the RPC
+-- endpoints are closed in 20260909130000 by moving the functions out of the
+-- API-exposed schema, which is the only fix that works. Kept as a separate step
+-- so the two concerns stay legible in the history.
+
+alter function touch_updated_at() set search_path = public, pg_temp;
+
+revoke execute on function public.is_admin()             from anon, authenticated;
+revoke execute on function public.is_instructor_of(uuid) from anon, authenticated;
+revoke execute on function public.handle_new_user()      from anon, authenticated;
+
+-- ====================================================================
+-- step 5  —  20260909130000_move_helpers_out_of_api_schema.sql
+-- ====================================================================
+-- Close the RPC endpoints on the security-definer helpers.
+--
+-- All four helper functions lived in `public`, which PostgREST exposes, so anon
+-- and authenticated could POST to /rest/v1/rpc/is_admin,
+-- /rest/v1/rpc/is_instructor_of and /rest/v1/rpc/handle_new_user. None of them
+-- is meant to be called by a client: three serve RLS policies, one serves a
+-- trigger. `handle_new_user` is the worst of it — security definer, runs as its
+-- owner, and writes to `profiles`.
+--
+-- The obvious fix does not work. Revoking EXECUTE (from PUBLIC, which is where
+-- the grant actually comes from) breaks RLS: policy expressions ARE permission-
+-- checked against the querying role, so `select from enquiries` as
+-- `authenticated` fails with
+--
+--     ERROR: 42501: permission denied for function is_admin
+--
+-- because `read_enquiries` is `using (is_admin())` with no other condition to
+-- short-circuit to. Verified directly against this database.
+--
+-- So move them instead. A schema outside PostgREST's exposed list has no RPC
+-- endpoint, while EXECUTE stays intact so policies keep working. Verified before
+-- applying, all inside a rolled-back transaction:
+--
+--   * Policies survive the move. They store function OIDs, not names, so
+--     `alter function ... set schema` does not invalidate them: as
+--     `authenticated`, courses still returned 6 rows and enquiries/assignments
+--     evaluated without error.
+--   * on_auth_user_created still fires — inserting an auth.users row created the
+--     matching profile with the moved `handle_new_user`.
+--   * The touch triggers still fire — an update writing a deliberately stale
+--     `updated_at = '2000-01-01'` came back as the current timestamp, so the
+--     moved `touch_updated_at` overwrote it.
+--
+-- `search_path = public, pg_temp` on these functions stays correct: the tables
+-- they read (profiles, courses, instructors) remain in `public`.
+--
+-- Do NOT add `private` to the project's exposed schemas — that would undo this.
+
+create schema if not exists private;
+
+-- USAGE only. It lets the roles reach the functions they already hold EXECUTE
+-- on; it does not grant access to anything else placed in the schema later.
+grant usage on schema private to anon, authenticated, service_role;
+
+alter function public.is_admin()             set schema private;
+alter function public.is_instructor_of(uuid) set schema private;
+alter function public.handle_new_user()      set schema private;
+alter function public.touch_updated_at()     set schema private;
+
+-- ====================================================================
+-- step 6  —  seed.sql
 -- ====================================================================
 -- Tech Lab Academy — seed data lifted from the prototypes.
 -- Run after 02-rls.sql, as the service role (bypasses RLS).
