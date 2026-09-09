@@ -61,12 +61,32 @@ update profiles set role = 'admin' where email = 'you@techlabacademy.co';
 
 ### Media
 
-The 13 photographs are still referenced from the temporary CDN listed in
-`assets/manifest.md`. Upload them to Cloudinary under the folders in that file
-and update `media_assets.public_id`; `lib/cloudinary.ts` then delivers them
-through the named transformations (`t_hero`, `t_card`, `t_portrait`, `t_thumb`).
-Until then `lib/content/defaults.ts` falls back to the CDN links so nothing
-renders blank.
+The 13 photographs live in Cloudinary under `tech-lab-academy/{marketing,courses,people}/`,
+and `supabase/seed.sql` carries those ids. The namespace exists because the
+product environment is shared with another project; `ASSET_NAMESPACE` in
+`lib/cloudinary.ts` is the single place it is defined.
+
+Two folder concepts sit side by side and are easy to confuse:
+
+| | Value | Used for |
+|---|---|---|
+| `public_id` prefix | `tech-lab-academy/marketing` | where the asset lives in Cloudinary, and its delivery URL |
+| `media_assets.folder` | `marketing` | the console's filter pills, nothing else |
+
+`/api/cloudinary/sign` returns both — `uploadFolder` for the Cloudinary form
+field, `category` for the database row — so a console upload lands in the right
+place without the namespace leaking into the UI.
+
+Delivery goes through the explicit transformation params in `lib/cloudinary.ts`
+(`c_fill,g_auto,…` per slot). The handoff also names transformations `t_hero`,
+`t_card`, `t_portrait` and `t_thumb`; creating them in the Cloudinary console is
+optional polish, since the params are inlined precisely so delivery works
+without them.
+
+`ASSET_FALLBACK` in `lib/content/defaults.ts` still maps those 13 ids back to
+their original CDN links, so a checkout with no `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`
+renders the marketing site instead of placeholders. It is a development
+convenience and can be deleted once every environment has the cloud name.
 
 ## Layout
 

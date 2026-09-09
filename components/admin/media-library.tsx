@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useMemo, useRef, useState } from 'react'
 import { FilterPill } from '@/components/ui'
+import { ASSET_CATEGORIES } from '@/lib/cloudinary'
 import { Modal, ConfirmActions } from '@/components/ui/modal'
 import { deleteMediaAsset, registerMediaAsset } from '@/lib/admin-actions'
 import { formatBytes } from '@/lib/format'
@@ -21,7 +22,7 @@ export type MediaRow = {
   usedOn: string[]
 }
 
-const FOLDERS = ['All', 'marketing', 'courses', 'people'] as const
+const FOLDERS = ['All', ...ASSET_CATEGORIES] as const
 
 export function MediaLibrary({ assets }: { assets: MediaRow[] }) {
   const router = useRouter()
@@ -58,7 +59,10 @@ export function MediaLibrary({ assets }: { assets: MediaRow[] }) {
       const sign = (await signRes.json()) as {
         apiKey: string
         timestamp: number
-        folder: string
+        /** Namespaced Cloudinary folder — must match what the server signed. */
+        uploadFolder: string
+        /** Bare category, for media_assets.folder. */
+        category: string
         signature: string
         uploadUrl: string
       }
@@ -67,7 +71,7 @@ export function MediaLibrary({ assets }: { assets: MediaRow[] }) {
       form.append('file', file)
       form.append('api_key', sign.apiKey)
       form.append('timestamp', String(sign.timestamp))
-      form.append('folder', sign.folder)
+      form.append('folder', sign.uploadFolder)
       form.append('signature', sign.signature)
 
       const uploadRes = await fetch(sign.uploadUrl, { method: 'POST', body: form })
@@ -84,7 +88,7 @@ export function MediaLibrary({ assets }: { assets: MediaRow[] }) {
       const result = await registerMediaAsset({
         publicId: uploaded.public_id,
         filename: `${uploaded.original_filename}.${uploaded.format}`,
-        folder: sign.folder,
+        folder: sign.category,
         width: uploaded.width,
         height: uploaded.height,
         bytes: uploaded.bytes,

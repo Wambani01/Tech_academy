@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "doctor": "node scripts/doctor.mjs"
+    "doctor": "node scripts/doctor.mjs",
+    "bundle": "node scripts/build-bundle.mjs",
+    "bundle:check": "node scripts/build-bundle.mjs --check"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

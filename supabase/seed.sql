@@ -38,21 +38,24 @@ insert into faqs (position, question, answer, category, is_live) values
   (7, 'Are sessions online or in person?', 'Most cohorts run online with live sessions. Selected programmes add optional in-person studio days in Nairobi.', 'Campus', true),
   (8, 'Do you help with job placement?', 'We run portfolio reviews and introduce strong graduates to hiring partners, but we do not guarantee placement.', 'Programs', false);
 
--- media: replace public_id values with the real Cloudinary ids after upload
-insert into media_assets (public_id, filename, folder, width, height, alt) values
-  ('marketing/hero-classroom-daylight', 'hero-classroom-daylight.png', 'marketing', 2560, 1440, 'Sunlit classroom with students working at laptops'),
-  ('marketing/cohort-classroom',        'cohort-classroom.png',        'marketing', 2560, 1440, 'A cohort working around a shared table'),
-  ('courses/track-ai-marketing',        'track-ai-marketing.png',      'courses',   2560, 1440, 'Marketer reviewing a campaign dashboard'),
-  ('courses/track-brand-design',        'track-brand-design.png',      'courses',   2560, 1440, 'Brand colour swatches on a desk'),
-  ('courses/track-development',         'track-development.png',       'courses',   2560, 1440, 'Two developers pair-programming'),
-  ('courses/track-automation',          'track-automation.png',        'courses',   2560, 1440, 'Workflow cards mapped on a glass board'),
-  ('marketing/business-team-training',  'business-team-training.png',  'marketing', 2400, 1600, 'A team in a private training session'),
-  ('marketing/campus-evening-study',    'campus-evening-study.png',    'marketing', 2400, 1600, 'Student studying at home in the evening'),
-  ('marketing/campus-exterior',         'campus-exterior.png',         'marketing', 2048, 1536, 'Academy building at golden hour'),
-  ('people/instructor-sarah',           'instructor-sarah.png',        'people',    2048, 1536, 'Portrait of an instructor in a classroom'),
-  ('people/instructor-tom',             'instructor-tom.png',          'people',    2048, 1536, 'Portrait of an instructor in a studio'),
-  ('people/students-whiteboard',        'students-whiteboard.png',     'people',    2048, 1536, 'Students at a whiteboard'),
-  ('courses/course-workspace',          'course-workspace.png',        'courses',   2560, 1440, 'Course workspace still life');
+-- media: the real Cloudinary ids, namespaced under tech-lab-academy/ because the
+-- product environment is shared with another project. `folder` stays the bare
+-- category — it drives the filter pills in the admin media library, not delivery.
+-- Dimensions and byte sizes are the uploaded originals.
+insert into media_assets (public_id, filename, folder, width, height, bytes, alt) values
+  ('tech-lab-academy/marketing/hero-classroom-daylight', 'hero-classroom-daylight.png', 'marketing', 2560, 1440, 4138160, 'Sunlit classroom with students working at laptops'),
+  ('tech-lab-academy/marketing/cohort-classroom',        'cohort-classroom.png',        'marketing', 2560, 1440, 5564876, 'A cohort working around a shared table'),
+  ('tech-lab-academy/courses/track-ai-marketing',        'track-ai-marketing.png',      'courses',   2560, 1440, 4849825, 'Marketer reviewing a campaign dashboard'),
+  ('tech-lab-academy/courses/track-brand-design',        'track-brand-design.png',      'courses',   2560, 1440, 5450515, 'Brand colour swatches on a desk'),
+  ('tech-lab-academy/courses/track-development',         'track-development.png',       'courses',   2560, 1440, 3894596, 'Two developers pair-programming'),
+  ('tech-lab-academy/courses/track-automation',          'track-automation.png',        'courses',   2560, 1440, 4102590, 'Workflow cards mapped on a glass board'),
+  ('tech-lab-academy/marketing/business-team-training',  'business-team-training.png',  'marketing', 2496, 1664, 5763877, 'A team in a private training session'),
+  ('tech-lab-academy/marketing/campus-evening-study',    'campus-evening-study.png',    'marketing', 2496, 1664, 6016109, 'Student studying at home in the evening'),
+  ('tech-lab-academy/marketing/campus-exterior',         'campus-exterior.png',         'marketing', 2304, 1728, 7112653, 'Academy building at golden hour'),
+  ('tech-lab-academy/people/instructor-sarah',           'instructor-sarah.png',        'people',    2304, 1728, 4622025, 'Portrait of an instructor in a classroom'),
+  ('tech-lab-academy/people/instructor-tom',             'instructor-tom.png',          'people',    2304, 1728, 5153361, 'Portrait of an instructor in a studio'),
+  ('tech-lab-academy/people/students-whiteboard',        'students-whiteboard.png',     'people',    2304, 1728, 5987145, 'Students at a whiteboard'),
+  ('tech-lab-academy/courses/course-workspace',          'course-workspace.png',        'courses',   2560, 1440, 2671891, 'Course workspace still life');
 
 -- pages + blocks. fields payloads mirror the block registry.
 insert into pages (slug, title, status, published_at) values
@@ -76,7 +79,7 @@ select p.id, 1, 'hero', jsonb_build_object(
        m.id,
        'Sunlit classroom with students working at laptops'
 from pages p, media_assets m
-where p.slug = 'home' and m.public_id = 'marketing/hero-classroom-daylight';
+where p.slug = 'home' and m.public_id = 'tech-lab-academy/marketing/hero-classroom-daylight';
 
 insert into page_blocks (page_id, position, kind, fields)
 select p.id, 2, 'stats', jsonb_build_object(
@@ -100,7 +103,7 @@ select p.id, 3, 'tracks', jsonb_build_object(
        m.id,
        'Marketer reviewing a campaign dashboard'
 from pages p, media_assets m
-where p.slug = 'home' and m.public_id = 'courses/track-ai-marketing';
+where p.slug = 'home' and m.public_id = 'tech-lab-academy/courses/track-ai-marketing';
 
 insert into page_blocks (page_id, position, kind, fields)
 select p.id, 4, 'steps', jsonb_build_object(
@@ -177,7 +180,7 @@ select p.id, 1, 'hero', jsonb_build_object(
        m.id,
        'A team in a private training session'
 from pages p, media_assets m
-where p.slug = 'business' and m.public_id = 'marketing/business-team-training';
+where p.slug = 'business' and m.public_id = 'tech-lab-academy/marketing/business-team-training';
 
 insert into page_blocks (page_id, position, kind, fields)
 select p.id, 2, 'stats', jsonb_build_object(
@@ -204,7 +207,7 @@ select p.id, 1, 'hero', jsonb_build_object(
        m.id,
        'Student studying at home in the evening'
 from pages p, media_assets m
-where p.slug = 'campus' and m.public_id = 'marketing/campus-evening-study';
+where p.slug = 'campus' and m.public_id = 'tech-lab-academy/marketing/campus-evening-study';
 
 insert into page_blocks (page_id, position, kind, fields)
 select p.id, 2, 'meta', jsonb_build_object(

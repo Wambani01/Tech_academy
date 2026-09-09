@@ -16,7 +16,7 @@ export type DefaultBlock = {
   position: number
   kind: BlockKind
   fields: Record<string, string>
-  /** Cloudinary public_id, or the temporary CDN URL until the migration lands. */
+  /** Cloudinary public_id. */
   image?: string
   imageAlt?: string
   /** Track cards carry one image each. */
@@ -25,27 +25,35 @@ export type DefaultBlock = {
 
 const CDN = 'https://d8j0ntlcm91z4.cloudfront.net/user_3HDwCEa8MqjLF91O1hO8lu9lW6v'
 
-/** Temporary CDN links from `assets/manifest.md`, keyed by Cloudinary target. */
+/**
+ * The original CDN links, keyed by Cloudinary public_id.
+ *
+ * The assets now live in Cloudinary, so this map is only reached when
+ * `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` is unset — a checkout with no Cloudinary
+ * configured still renders the marketing site rather than a wall of
+ * placeholders. It is a development convenience, not a production path, and can
+ * be deleted once every environment has the cloud name.
+ */
 export const ASSET_FALLBACK: Record<string, string> = {
-  'marketing/hero-classroom-daylight': `${CDN}/hf_20260819_120104_eb685a6e-a46c-43c2-988c-4e0ef3ed9ed8.png`,
-  'marketing/cohort-classroom': `${CDN}/hf_20260819_112551_1a6870e2-ed7b-40f2-a759-ac22c1608725.png`,
-  'courses/track-ai-marketing': `${CDN}/hf_20260819_112551_6d93d457-5655-4ca1-9a71-bdfaaefe6864.png`,
-  'courses/track-brand-design': `${CDN}/hf_20260819_112551_e00a2d7a-466e-48a2-a764-4a4284651011.png`,
-  'courses/track-development': `${CDN}/hf_20260819_112551_e3f0ef0b-e44b-43df-a219-07668153123d.png`,
-  'courses/track-automation': `${CDN}/hf_20260819_112551_60395cd8-8a23-4f63-bfbd-d1dbebd50b01.png`,
-  'marketing/business-team-training': `${CDN}/hf_20260819_112716_6eb46da8-8299-4a55-b979-dc121190f344.png`,
-  'marketing/campus-evening-study': `${CDN}/hf_20260819_112551_6d5d2ead-5230-4dd5-a732-58aeefa6b3fd.png`,
-  'marketing/campus-exterior': `${CDN}/hf_20260819_112551_5e81c8db-3e12-4d04-ae30-58911d8316e0.png`,
-  'people/instructor-sarah': `${CDN}/hf_20260819_112551_d130a887-25a7-4718-a237-c4fa6f1a693d.png`,
-  'people/instructor-tom': `${CDN}/hf_20260819_112551_3990c16b-0e8e-4181-8544-f80dc0164b76.png`,
-  'people/students-whiteboard': `${CDN}/hf_20260819_112551_b98187c2-b94e-446e-b723-3aa812768256.png`,
-  'courses/course-workspace': `${CDN}/hf_20260819_112551_1e918206-54a6-4df0-bc0f-65c7d5cbac43.png`,
+  'tech-lab-academy/marketing/hero-classroom-daylight': `${CDN}/hf_20260819_120104_eb685a6e-a46c-43c2-988c-4e0ef3ed9ed8.png`,
+  'tech-lab-academy/marketing/cohort-classroom': `${CDN}/hf_20260819_112551_1a6870e2-ed7b-40f2-a759-ac22c1608725.png`,
+  'tech-lab-academy/courses/track-ai-marketing': `${CDN}/hf_20260819_112551_6d93d457-5655-4ca1-9a71-bdfaaefe6864.png`,
+  'tech-lab-academy/courses/track-brand-design': `${CDN}/hf_20260819_112551_e00a2d7a-466e-48a2-a764-4a4284651011.png`,
+  'tech-lab-academy/courses/track-development': `${CDN}/hf_20260819_112551_e3f0ef0b-e44b-43df-a219-07668153123d.png`,
+  'tech-lab-academy/courses/track-automation': `${CDN}/hf_20260819_112551_60395cd8-8a23-4f63-bfbd-d1dbebd50b01.png`,
+  'tech-lab-academy/marketing/business-team-training': `${CDN}/hf_20260819_112716_6eb46da8-8299-4a55-b979-dc121190f344.png`,
+  'tech-lab-academy/marketing/campus-evening-study': `${CDN}/hf_20260819_112551_6d5d2ead-5230-4dd5-a732-58aeefa6b3fd.png`,
+  'tech-lab-academy/marketing/campus-exterior': `${CDN}/hf_20260819_112551_5e81c8db-3e12-4d04-ae30-58911d8316e0.png`,
+  'tech-lab-academy/people/instructor-sarah': `${CDN}/hf_20260819_112551_d130a887-25a7-4718-a237-c4fa6f1a693d.png`,
+  'tech-lab-academy/people/instructor-tom': `${CDN}/hf_20260819_112551_3990c16b-0e8e-4181-8544-f80dc0164b76.png`,
+  'tech-lab-academy/people/students-whiteboard': `${CDN}/hf_20260819_112551_b98187c2-b94e-446e-b723-3aa812768256.png`,
+  'tech-lab-academy/courses/course-workspace': `${CDN}/hf_20260819_112551_1e918206-54a6-4df0-bc0f-65c7d5cbac43.png`,
 }
 
 /**
- * Resolve a Cloudinary public_id to something renderable.
- * Before the asset migration the seed carries Cloudinary ids that do not exist
- * yet, so fall back to the temporary CDN link from the manifest.
+ * Resolve a Cloudinary public_id to something renderable without Cloudinary.
+ * Returns null for anything uploaded since the migration — those ids have no
+ * CDN twin, and a null is the signal to render the striped placeholder.
  */
 export function assetFallback(publicId: string | null | undefined): string | null {
   if (!publicId) return null
@@ -56,7 +64,7 @@ export const HOME_BLOCKS: DefaultBlock[] = [
   {
     position: 1,
     kind: 'hero',
-    image: 'marketing/hero-classroom-daylight',
+    image: 'tech-lab-academy/marketing/hero-classroom-daylight',
     imageAlt: 'Sunlit classroom with students working at laptops',
     fields: {
       eyebrow: "East Africa's Practical Tech Academy",
@@ -80,10 +88,10 @@ export const HOME_BLOCKS: DefaultBlock[] = [
     position: 3,
     kind: 'tracks',
     cardImages: [
-      'courses/track-ai-marketing',
-      'courses/track-brand-design',
-      'courses/track-development',
-      'courses/track-automation',
+      'tech-lab-academy/courses/track-ai-marketing',
+      'tech-lab-academy/courses/track-brand-design',
+      'tech-lab-academy/courses/track-development',
+      'tech-lab-academy/courses/track-automation',
     ],
     fields: {
       title: 'Pick your track',
@@ -186,7 +194,7 @@ export const PAGE_DEFAULTS: Record<string, DefaultBlock[]> = {
     {
       position: 1,
       kind: 'hero',
-      image: 'marketing/business-team-training',
+      image: 'tech-lab-academy/marketing/business-team-training',
       imageAlt: 'A team in a private training session',
       fields: {
         eyebrow: 'For Teams & Organisations',
@@ -219,7 +227,7 @@ export const PAGE_DEFAULTS: Record<string, DefaultBlock[]> = {
     {
       position: 1,
       kind: 'hero',
-      image: 'marketing/campus-evening-study',
+      image: 'tech-lab-academy/marketing/campus-evening-study',
       imageAlt: 'Student studying at home in the evening',
       fields: {
         eyebrow: 'Digital Campus',

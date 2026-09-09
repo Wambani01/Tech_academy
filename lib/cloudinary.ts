@@ -8,6 +8,26 @@
 
 export type ImageSlot = 'hero' | 'card' | 'portrait' | 'thumb'
 
+/**
+ * Every asset this project owns is prefixed with this, because the Cloudinary
+ * product environment is shared with another project. It is part of the
+ * `public_id`, so it appears in delivery URLs and in `media_assets.public_id`.
+ */
+export const ASSET_NAMESPACE = 'tech-lab-academy'
+
+/**
+ * The media-library categories. These are the `media_assets.folder` values that
+ * drive the filter pills — deliberately *not* namespaced, so the console reads
+ * "marketing" rather than "tech-lab-academy/marketing".
+ */
+export const ASSET_CATEGORIES = ['marketing', 'courses', 'people'] as const
+export type AssetCategory = (typeof ASSET_CATEGORIES)[number]
+
+/** The Cloudinary upload folder for a category — the namespaced form. */
+export function uploadFolderFor(category: AssetCategory): string {
+  return `${ASSET_NAMESPACE}/${category}`
+}
+
 /** Named transformations, mirrored as explicit params so delivery works before
  *  the named transformations are created in the Cloudinary console. */
 const SLOT_TRANSFORM: Record<ImageSlot, string> = {

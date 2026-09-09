@@ -1,6 +1,14 @@
 import { createHash } from 'crypto'
 import { NextResponse } from 'next/server'
+import {
+  ASSET_CATEGORIES,
+  uploadFolderFor,
+  type AssetCategory,
+} from '@/lib/cloudinary'
 import { createClient } from '@/lib/supabase/server'
+
+const isCategory = (v: string | undefined): v is AssetCategory =>
+  ASSET_CATEGORIES.includes(v as AssetCategory)
 
 /**
  * Signed Cloudinary upload params. Admin only.
@@ -32,22 +40,32 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json().catch(() => ({}))) as { folder?: string }
-  const allowed = ['marketing', 'courses', 'people']
-  const folder = allowed.includes(body.folder ?? '')
-    ? body.folder!
-    : (process.env.CLOUDINARY_UPLOAD_FOLDER ?? 'marketing')
+  const fallback = process.env.CLOUDINARY_UPLOAD_FOLDER
+  const category = (
+    isCategory(body.folder)
+      ? body.folder
+      : isCategory(fallback)
+        ? fallback
+        : 'marketing'
+  ) satisfies AssetCategory
+
+  // Two different things, deliberately: `uploadFolder` is where the asset lands
+  // in Cloudinary (namespaced, because the environment is shared), `category` is
+  // what media_assets.folder stores and the console's filter pills read.
+  const uploadFolder = uploadFolderFor(category)
 
   const timestamp = Math.floor(Date.now() / 1000)
 
   // Cloudinary signs the alphabetically-sorted params, secret appended.
-  const toSign = `folder=${folder}&timestamp=${timestamp}`
+  const toSign = `folder=${uploadFolder}&timestamp=${timestamp}`
   const signature = createHash('sha1').update(`${toSign}${apiSecret}`).digest('hex')
 
   return NextResponse.json({
     cloudName,
     apiKey,
     timestamp,
-    folder,
+    uploadFolder,
+    category,
     signature,
     uploadUrl: `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
   })
