@@ -52,21 +52,35 @@ export function SignUpForm() {
 
     setBusy(true)
     setErrors({})
-    const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: name.trim() },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    setBusy(false)
 
-    if (error) {
-      setErrors({ form: error.message })
+    // Sign-up runs server-side: /api/auth/sign-up creates the account already
+    // confirmed and sets the session cookies, so the account is usable whatever
+    // the project's email-confirmation setting happens to be.
+    let payload: { ok?: boolean; error?: string; signIn?: boolean } = {}
+    try {
+      const res = await fetch('/api/auth/sign-up', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
+      })
+      payload = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        setBusy(false)
+        if (payload.signIn) {
+          router.push('/sign-in?created=1')
+          return
+        }
+        setErrors({ form: payload.error ?? 'Could not create your account.' })
+        return
+      }
+    } catch {
+      setBusy(false)
+      setErrors({ form: 'Could not reach the server. Check your connection.' })
       return
     }
+
+    setBusy(false)
     router.push('/dashboard')
     router.refresh()
   }

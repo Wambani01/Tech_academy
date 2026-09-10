@@ -13,6 +13,14 @@ export function SignInForm() {
   const params = useSearchParams()
   const next = params.get('next') ?? '/dashboard'
 
+  // Set by /api/auth/sign-up when the account was created but the session was
+  // not, and by /auth/callback when an email or OAuth link fails to exchange.
+  const notice = params.get('created')
+    ? 'Your account is ready. Sign in to continue.'
+    : params.get('error') === 'callback'
+      ? 'That sign-in link has expired or was already used. Try again.'
+      : null
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({})
@@ -64,6 +72,12 @@ export function SignInForm() {
     <>
       <AuthTitle>Welcome back</AuthTitle>
       <AuthSubtitle>Sign in to continue your learning.</AuthSubtitle>
+
+      {notice ? (
+        <div className="text-label text-muted bg-[rgba(15,32,25,.05)] rounded-md px-3.5 py-3 mb-5 leading-[1.5]">
+          {notice}
+        </div>
+      ) : null}
 
       <form onSubmit={onSubmit} noValidate>
         <div className="flex flex-col gap-4 mb-5">
